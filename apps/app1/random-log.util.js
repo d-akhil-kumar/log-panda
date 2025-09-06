@@ -8,11 +8,29 @@ module.exports = (appName) => {
         "Request timed out",
         "Order placed successfully"
     ];
+    const transactionIds = ["#t1001", "#t2401", "#t4091"];
+    const userNames = ["Ajay", "Anusha", "Abhilash"];
 
-    const level = levels[Math.floor(Math.random() * levels.length)];
-    const message = messages[Math.floor(Math.random() * messages.length)];
+    const level = getRandomValue(levels);
+    const message = getRandomValue(messages);
     const timestamp = new Date().toISOString();
+    const transactionId = getRandomValue(transactionIds);
+    const userName = getRandomValue(userNames);
 
-    return `[${timestamp}] [${appName}] [${level}] ${message}`;
+    const context = {
+        transactionId,
+        userName
+    };
+
+    return {
+        appName,
+        level,
+        message,
+        timestamp,
+        context
+    };
+};
+
+function getRandomValue(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
 }
-
