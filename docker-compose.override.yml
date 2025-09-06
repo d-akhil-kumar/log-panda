@@ -1,0 +1,3 @@
+# master to all docker composes
+# a unified docker-compose.override.yml 
+# setup so developers only need docker-compose up once for all apps + ingest + kafka

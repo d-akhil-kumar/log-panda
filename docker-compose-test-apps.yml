@@ -1,0 +1,60 @@
+services:
+  app1:
+    container_name: log_panda_app1_c
+    image: log_panda_app1_i:latest
+    build:
+      context: ./apps/app1
+    ports:
+      - "3000:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 2s
+    networks:
+      - log_panda_network_n
+
+  app2:
+    image: log_panda_app2_i:latest
+    container_name: log_panda_app2_c
+    build:
+      context: ./apps/app2
+    ports:
+      - "3001:8080"
+    env_file:
+      - ./apps/app2/.env
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 2s
+    networks:
+      - log_panda_network_n
+
+
+  app3:
+    image: log_panda_app3_i:latest
+    container_name: log_panda_app3_c
+    build:
+      context: ./apps/app3
+    ports:
+      - "3002:8080"
+    environment:
+      PORT: 8080
+      APP_NAME: "app3"
+      GENERATE_LOGS_TIME_SECONDS: 2
+      INGEST_API_URL: "http://log-ingest:8080/ingest"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 2s
+    networks:
+      - log_panda_network_n
+
+networks:
+  log_panda_network_n:
+    external: true
