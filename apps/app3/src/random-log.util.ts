@@ -1,17 +1,20 @@
-type LogLevel = "INFO" | "WARN" | "ERROR";
+import { LogLevel } from "./log-level.type";
+import { LogObject } from "./log.interface";
 
-export function randomLog(appName: string): string {
+export function randomLog(appName: string): LogObject {
   const levels: LogLevel[] = ["INFO", "WARN", "ERROR"];
   const notificationTypes = ["Email", "SMS", "Push"];
   const userNames = ["Silvy", "Akku", "Rohan", "Kuldeep"];
   const templateIds = ["#n101", "#n204", "#n309"];
 
-  const level = levels[Math.floor(Math.random() * levels.length)];
+  const level = getRandomValue(levels) as LogLevel;
+  const templateId = getRandomValue(templateIds);
+  const userName = getRandomValue(userNames);
 
   const messages = {
     INFO: [
       `${getRandomValue(notificationTypes)} notification sent successfully`,
-      `Notification template ${getRandomValue(templateIds)} delivered`,
+      `Notification template ${templateId} delivered`,
       `User ${getRandomValue(userNames)} received a notification`,
     ],
     WARN: [
@@ -22,17 +25,29 @@ export function randomLog(appName: string): string {
     ERROR: [
       `${getRandomValue(notificationTypes)} notification failed`,
       `Failed to deliver notification to user ${getRandomValue(userNames)}`,
-      `Template ${getRandomValue(templateIds)} missing content`,
+      `Template ${templateId} missing content`,
     ],
   };
 
-  const msgList = messages[level];
-  const message = msgList[Math.floor(Math.random() * msgList.length)];
+  const message = getRandomValue(messages[level]) as string;
   const timestamp = new Date().toISOString();
 
-  return `[${timestamp}] [${appName}] [${level}] ${message}`;
+  const context = {
+    userName,
+    templateId,
+  };
+
+  return {
+    appName,
+    level,
+    message,
+    timestamp,
+    context,
+  };
 }
 
-function getRandomValue(arr: number[] | string[]): number | string {
+function getRandomValue(
+  arr: number[] | string[] | LogLevel[]
+): number | string | LogLevel {
   return arr[Math.floor(Math.random() * arr.length)];
 }

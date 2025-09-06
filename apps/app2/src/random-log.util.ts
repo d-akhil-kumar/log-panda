@@ -1,17 +1,20 @@
-type LogLevel = "INFO" | "WARN" | "ERROR";
+import { LogLevel } from "./log-level.type";
+import { LogObject } from "./log.interface";
 
-export function randomLog(appName: string): string {
+export function randomLog(appName: string): LogObject {
   const levels: LogLevel[] = ["INFO", "WARN", "ERROR"];
   const amounts = [12000, 7000, 5600];
   const transactionIds = ["#t1001", "#t2401", "#t4091"];
   const userNames = ["akhil", "swarup", "ishaan", "sammed"];
 
-  const level = levels[Math.floor(Math.random() * levels.length)];
+  const level = getRandomValue(levels) as LogLevel;
+  const transactionId = getRandomValue(transactionIds);
+  const userName = getRandomValue(userNames);
 
   const messages = {
     INFO: [
       `Payment of $${getRandomValue(amounts)} processed`,
-      `Transaction ID: ${getRandomValue(transactionIds)}`,
+      `Transaction ID: ${transactionId}`,
       `Refund issued successfully`,
     ],
     WARN: [
@@ -21,17 +24,29 @@ export function randomLog(appName: string): string {
     ],
     ERROR: [
       `Payment declined due to insufficient funds`,
-      `Transaction failed for user ${getRandomValue(userNames)}`,
+      `Transaction failed for user ${userName}`,
     ],
   };
 
-  const msgList = messages[level];
-  const message = msgList[Math.floor(Math.random() * msgList.length)];
+  const message = getRandomValue(messages[level]) as string;
   const timestamp = new Date().toISOString();
 
-  return `[${timestamp}] [${appName}] [${level}] ${message}`;
+  const context = {
+    transactionId,
+    userName,
+  };
+
+  return {
+    appName,
+    level,
+    message,
+    timestamp,
+    context,
+  };
 }
 
-function getRandomValue(arr: number[] | string[]): number | string {
+function getRandomValue(
+  arr: number[] | string[] | LogLevel[]
+): number | string | LogLevel {
   return arr[Math.floor(Math.random() * arr.length)];
 }

@@ -1,5 +1,8 @@
+import dotenv from "dotenv";
+dotenv.config();
 import express, { Request, Response } from "express";
 import { randomLog } from "./random-log.util";
+import { LogService } from "./log.service";
 
 const app = express();
 
@@ -12,11 +15,9 @@ app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({ status: "ok" });
 });
 
-setInterval(() => {
-  const logMessage = randomLog(APP_NAME);
-
-  //TODO: publish this log to kafka
-  console.log(logMessage);
+setInterval(async () => {
+  const log = randomLog(APP_NAME);
+  await LogService(log);
 }, parseInt(GENERATE_LOGS_TIME_SECONDS) * 1000);
 
 app.listen(PORT, (): void => {
