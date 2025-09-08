@@ -23,7 +23,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
     this.producer = this.kafka.producer({
       allowAutoTopicCreation: false,
-      idempotent: true, // Ensure exactly-once delivery
+      idempotent: true, // Ensure exactly-once delivery, we also have [at-most-once, at-least-once] options
       retry: { retries: 5 }, // Retry up to 5 times on failure
     });
   }

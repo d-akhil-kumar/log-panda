@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { KafkaService } from './domain/kafka.service';
+import { KafkaService } from './domain/services/kafka.service';
 
 @Module({
   controllers: [],

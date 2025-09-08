@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IngestLogRequestDto } from 'src/ingest/application/dtos/ingest-log-request.dto';
-import { KafkaService } from 'src/kafka/domain/kafka.service';
+import { KafkaService } from 'src/kafka/domain/services/kafka.service';
 
 @Injectable()
 export class IngestService {
