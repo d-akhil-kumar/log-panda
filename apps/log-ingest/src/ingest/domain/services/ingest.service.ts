@@ -10,7 +10,7 @@ export class IngestService {
   async ingestLog(log: IngestLogRequestDto): Promise<void> {
     const timestamp = log.timestamp || new Date().toISOString();
 
-    const logEntry = {
+    const logEntry: IngestLogRequestDto = {
       ...log,
       timestamp,
     };

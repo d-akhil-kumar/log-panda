@@ -21,7 +21,11 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
       brokers: KafkaService.BROKERS,
     });
 
-    this.producer = this.kafka.producer();
+    this.producer = this.kafka.producer({
+      allowAutoTopicCreation: false,
+      idempotent: true, // Ensure exactly-once delivery
+      retry: { retries: 5 }, // Retry up to 5 times on failure
+    });
   }
 
   async onModuleInit() {
@@ -40,8 +44,11 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
       messages: [
         {
           value: JSON.stringify(message),
+          //so that same logs goes to same partition beacuse of the hashing of key, this helps in ordering
+          // key: message.appName,
         },
       ],
+      acks: -1, // Wait for all replicas to acknowledge
     };
 
     await this.producer.send(record);
