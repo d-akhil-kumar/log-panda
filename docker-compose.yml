@@ -73,6 +73,29 @@ services:
       kafka-topics.sh --bootstrap-server log-ingest-kafka:9092 --list
       "
 
+
+  log-db-ingest:
+    image: log_panda_log_db_ingest_i
+    container_name: log_panda_log_db_ingest_c
+    build:
+      context: ./apps/log-db-ingest   
+    ports:
+      - "3004:8080"
+    environment:
+      PORT: 8080
+    depends_on:
+      log-ingest-kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 2s
+    networks:
+      - log_panda_network 
+
+
 networks:
   log_panda_network:
     driver: bridge

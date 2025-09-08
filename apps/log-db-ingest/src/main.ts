@@ -1,8 +1,20 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { Logger } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 3000);
+const logger = new Logger('main.ts:bootstrap');
+
+async function bootstrap(): Promise<void> {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {});
+
+  app.setGlobalPrefix('');
+
+  const PORT = process.env.PORT || 3000;
+
+  await app.listen(PORT);
+
+  logger.debug(`Server is running on port: ${PORT}`);
 }
+
 bootstrap();

@@ -1,0 +1,28 @@
+# build stage
+FROM node:22-alpine AS build
+
+WORKDIR /usr/app/src
+
+COPY package.json package.json
+COPY package-lock.json package-lock.json
+
+RUN npm ci
+
+COPY . .
+
+RUN npm run build
+
+
+# prod stage
+FROM node:22-alpine AS prod
+
+WORKDIR /usr/src/app
+
+COPY package.json package.json
+COPY package-lock.json package-lock.json
+
+RUN npm ci --omit=dev
+
+COPY --from=build ./usr/app/src/dist ./dist
+
+CMD ["npm", "run", "start:prod"]
