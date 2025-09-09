@@ -27,6 +27,7 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
       //we dont have to mention this before hand to kafka
       //this will get resgistered for a unique groupId from the consumer side
       groupId: KafkaConsumerService.CONSUMER_GROUP_ID,
+      allowAutoTopicCreation: false,
     });
   }
 

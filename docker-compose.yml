@@ -9,8 +9,8 @@ services:
     environment:
       PORT: 8080
     depends_on:
-      log-ingest-kafka:
-        condition: service_healthy
+      log-ingest-kafka-init:    # ✅ ensure topics exist before producer starts
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
       interval: 5s
@@ -78,14 +78,12 @@ services:
     image: log_panda_log_db_ingest_i
     container_name: log_panda_log_db_ingest_c
     build:
-      context: ./apps/log-db-ingest   
-    ports:
-      - "3004:8080"
+      context: ./apps/log-db-ingest
     environment:
       PORT: 8080
     depends_on:
-      log-ingest-kafka:
-        condition: service_healthy
+      log-ingest-kafka-init:    # ✅ ensure topics exist before consumer starts
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
       interval: 5s
@@ -95,6 +93,8 @@ services:
     networks:
       - log_panda_network 
 
+# create multiple services of log-db-ingest, to have multiple consumers
+# within the same consumer-group
 
 networks:
   log_panda_network:

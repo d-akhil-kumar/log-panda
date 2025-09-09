@@ -45,7 +45,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
         {
           value: JSON.stringify(message),
           //so that same logs goes to same partition beacuse of the hashing of key, this helps in ordering
-          // key: message.appName,
+          // key: message.appName, // STUDY THIS
         },
       ],
       acks: -1, // Wait for all replicas to acknowledge
