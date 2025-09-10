@@ -1,0 +1,33 @@
+services:
+  log-db-postgres:
+    image: ankane/pgvector
+    container_name: log_panda_log_db_pg_c
+    ports:
+      - "5431:5432"
+    command: >
+      postgres -c timezone=America/Los_Angeles -c max_connections=500 -c shared_buffers=256MB -c work_mem=64MB -c maintenance_work_mem=128MB -c log_statement=all -c log_destination=stderr -c log_directory=/var/log/postgresql -c log_filename=postgresql.log
+    volumes:
+      - log_panda_log_in_pg_v:/var/lib/postgresql/data
+      - ./docker/pg/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - log_panda_network
+    environment:
+      - POSTGRES_DB=log_panda
+      - POSTGRES_USER=log_panda_db_user
+      - POSTGRES_PASSWORD=ptm_pg_2024
+      - POSTGRES_PORT=5432
+    healthcheck:
+      test: [ 'CMD', 'pg_isready', '-U', 'log_panda_db_user', '-d', 'log_panda', '-t', '1' ]
+      interval: 2s
+      timeout: 100s
+      retries: 10
+
+
+networks:
+  log_panda_network:
+    driver: bridge
+    name: log_panda_network_n
+
+
+volumes:
+  log_panda_log_in_pg_v:

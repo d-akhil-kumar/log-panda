@@ -81,6 +81,12 @@ services:
       context: ./apps/log-db-ingest
     environment:
       PORT: 8080
+      NODE_ENV: production
+      DB_HOST: log-db-postgres
+      DB_PORT: 5432
+      DB_USERNAME: log_panda_db_user
+      DB_PASSWORD: ptm_pg_2024
+      DB_DATABASE: log_panda
     depends_on:
       log-ingest-kafka-init:    # ✅ ensure topics exist before consumer starts
         condition: service_completed_successfully
@@ -91,7 +97,8 @@ services:
       retries: 3
       start_period: 2s
     networks:
-      - log_panda_network 
+      - log_panda_network
+    restart: unless-stopped
 
 # create multiple services of log-db-ingest, to have multiple consumers
 # within the same consumer-group

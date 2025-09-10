@@ -5,6 +5,8 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { Consumer, Kafka } from 'kafkajs';
+import { LogBatchService } from './log-batch.service';
+import { IngestLogRequest } from '../interfaces/log.interface';
 
 @Injectable()
 export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
@@ -17,7 +19,7 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
   private readonly kafka: Kafka;
   private readonly consumer: Consumer;
 
-  constructor() {
+  constructor(private readonly logBatchService: LogBatchService) {
     this.kafka = new Kafka({
       clientId: KafkaConsumerService.CLIENT_ID,
       brokers: KafkaConsumerService.BROKERS,
@@ -46,9 +48,17 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
 
       await this.consumer.run({
         eachMessage: async ({ partition, message }) => {
-          const msg = message.value?.toString();
-          this.logger.log(`Received message (p${partition}): ${msg}`);
-          //   await this.batchService.addMessage(msg);
+          try {
+            const msg = message.value?.toString();
+            this.logger.debug(`Received message (p${partition}): ${msg}`);
+            
+            if (msg) {
+              const logData: IngestLogRequest = JSON.parse(msg);
+              await this.logBatchService.addLogToBatch(logData);
+            }
+          } catch (error) {
+            this.logger.error(`Error processing message (p${partition}):`, error.message);
+          }
         },
       });
 
