@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: log-panda-app1-service
+spec:
+  selector:
+    app: log-panda-app1   # matches Pod labels
+  ports:
+    - protocol: TCP
+      port: 3000          # service port (what clients use inside cluster)
+      targetPort: 8080    # pod’s containerPort
+      nodePort: 30001     # external port (minikube/node IP + 30001)
+  type: ClusterIP

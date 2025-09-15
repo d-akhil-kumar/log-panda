@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-panda-app1
+  labels:
+    app: log-panda-app1
+spec:
+  replicas: 2   # start with 2 pods
+  selector:
+    matchLabels:
+      app: log-panda-app1
+  template:
+    metadata:
+      labels:
+        app: log-panda-app1
+    spec:
+      containers:
+        - name: log-panda-app1
+          image: akhilk007/log_panda_app1:v1.0.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: LOG_INGEST_URL
+              value: "http://log-ingest:4000"
+            - name: APP_NAME
+              value: "app1"
+            - name: GENERATE_LOGS_TIME_SECONDS
+              value: "2"
