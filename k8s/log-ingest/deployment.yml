@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-panda-log-ingest
+  labels:
+    app: log-panda-log-ingest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-panda-log-ingest
+  template:
+    metadata:
+      labels:
+        app: log-panda-log-ingest
+    spec:
+      containers:
+        - name: log-panda-log-ingest-c
+          image: akhilk007/log_panda_log_ingest:v1.0.0
+          ports: 
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080" 

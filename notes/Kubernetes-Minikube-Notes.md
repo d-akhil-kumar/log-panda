@@ -1,4 +1,3 @@
-
 # Kubernetes & Minikube – Detailed Notes
 
 ## 🌐 What is Kubernetes?
@@ -40,6 +39,13 @@
   ```bash
   kubectl get nodes
   kubectl get pods -A
+  ```
+
+- **Clean up the existing Minikube cluster**:
+  ```bash
+  minikube stop
+  minikube delete
+  minikube start --driver=docker
   ```
 
 ---
@@ -125,7 +131,7 @@
 
 ## 📋 Environment Variables in Pods
 - Set directly in Deployment YAML under `spec.containers.env`.
-- Precedence: **Deployment env vars > Image baked `.env`**.
+- Precedence: **Deployment env vars > Image baked `.env` in src dir**.
 - Example:
   ```yaml
   env:
@@ -135,11 +141,18 @@
 
 ---
 
+## ⏳ Jobs
+- A Job ensures that **a pod runs to completion** (used for batch tasks like data processing, migrations, one-time jobs).
+- Unlike Deployments (which keep pods running), Jobs **terminate once done**.
+- Can be parallelized with `.spec.parallelism` and `.spec.completions`.
+
+---
+
 ## 🛠 Useful Commands Recap
 ```bash
 kubectl get pods                # list pods
 kubectl get svc                 # list services
-kubectl logs <pod>              # view pod logs
+kubectl logs -f <pod>              # view pod logs [if there are multiple containers running within a pod, then this will fetch the logs of first container by default]
 kubectl exec -it <pod> -- sh    # shell inside container
 kubectl apply -f file.yaml      # apply manifest
 kubectl delete -f file.yaml     # delete resource
@@ -149,5 +162,3 @@ minikube service <svc-name>     # open service in browser
 ```
 
 ---
-
-✅ With this, you now have a full picture from **what K8s is** → **how to run a local cluster with Minikube** → **Pods, Deployments, Services, Ingress** → **best practices for prod**.
