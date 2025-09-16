@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: log-panda-log-ingest-kafka-init
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: log-panda-log-ingest-kafka-init-c
+          image: bitnami/kafka:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Waiting for Kafka..."
+              while ! kafka-topics.sh --bootstrap-server log-panda-log-ingest-kafka-0.log-ingest-kafka:9092 --list >/dev/null 2>&1; do
+                sleep 5
+              done
+              echo "Creating topics..."
+              kafka-topics.sh --bootstrap-server log-panda-log-ingest-kafka-0.log-ingest-kafka:9092 --create --if-not-exists --topic log-ingest-topic --replication-factor 1 --partitions 3
+              echo "Kafka topics created successfully!"
