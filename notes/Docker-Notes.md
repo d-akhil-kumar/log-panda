@@ -175,6 +175,16 @@ docker network inspect <name>
 docker system prune -a
 ```
 
+### Push image to docker hub
+```sh
+docker build -t <image-name>:latest .
+docker tag <image-name>:latest <image-name>:v1.0.0
+docker push <image-name>:v1.0.0
+docker push <image-name>:latest
+```
+
+
+
 ---
 
 ## ⚡ Common Docker Compose Commands
