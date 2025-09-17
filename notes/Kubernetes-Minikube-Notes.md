@@ -276,3 +276,189 @@ Address: 10.244.2.20
 ✅ In short:  
 - **Normal Service (ClusterIP)** → One VIP, kube-proxy load balances.  
 - **Headless Service (`clusterIP: None`)** → No VIP, DNS returns **Pod IPs**. Perfect for StatefulSets.  
+
+
+# Kubernetes HPA (Horizontal Pod Autoscaler) – Notes
+
+## 🔹 What is HPA?
+- HPA automatically scales the number of **pods** in a Deployment, ReplicaSet, or StatefulSet based on observed metrics.
+- Metrics can be **CPU**, **memory**, or **custom metrics** (e.g., requests per second).
+
+---
+
+## 🔹 How HPA Works
+- Kubernetes continuously monitors the metrics of pods.
+- Compares **current average** with **target value**.
+- Adjusts replicas according to a formula.
+
+---
+
+## 🔹 Formula for Desired Replicas
+```
+desiredReplicas = currentReplicas * (currentAverage / targetAverage)
+```
+
+- **currentReplicas** → number of pods currently running.
+- **currentAverage** → average metric (CPU, memory, etc.) across all pods.
+- **targetAverage** → metric threshold you set in HPA.
+
+---
+
+## 🔹 Scale-Up Example
+
+**Scenario**:  
+- Target CPU: 50%  
+- Current Pods: 3  
+- CPU usage per pod: `[60%, 70%, 65%]`  
+
+**Step 1: Calculate average**  
+```
+Average CPU = (60 + 70 + 65) / 3 = 65%
+```
+
+**Step 2: Apply formula**  
+```
+desiredReplicas = 3 * (65 / 50) = 3 * 1.3 = 3.9 ≈ 4 pods
+```
+
+**Result:** HPA will scale **up from 3 → 4 pods**.
+
+---
+
+## 🔹 Scale-Down Example
+
+**Scenario**:  
+- Target CPU: 50%  
+- Current Pods: 4  
+- CPU usage per pod: `[40%, 45%, 35%, 50%]`  
+
+**Step 1: Calculate average**  
+```
+Average CPU = (40 + 45 + 35 + 50) / 4 = 42.5%
+```
+
+**Step 2: Apply formula**  
+```
+desiredReplicas = 4 * (42.5 / 50) = 4 * 0.85 = 3.4 ≈ 3 pods
+```
+
+**Result:** HPA will scale **down from 4 → 3 pods** after cooldown.
+
+---
+
+## 🔹 Important Notes on Scaling
+1. **Scale-up**: Happens immediately when metrics exceed target.  
+2. **Scale-down**: Cooldown period (default 5 min) prevents rapid scaling down.  
+3. **Min/Max replicas**: HPA respects `spec.minReplicas` and `spec.maxReplicas`.  
+4. **Average metric**: HPA calculates the average across all pods, not individual spikes.  
+5. **Multiple metrics**: If using multiple metrics, HPA uses the **highest required scale** among them.
+
+---
+
+## 🔹 Metrics Triggers
+| Metric Type         | Trigger Example                                 |
+|--------------------|-----------------------------------------------|
+| CPU                 | Average CPU > 70% → scale up                  |
+| Memory              | Average memory > 80% → scale up               |
+| Custom metrics      | Requests/sec, queue length, etc.              |
+| External metrics    | External systems like Prometheus, Kafka lag   |
+
+---
+
+## 🔹 Adding HPA to Deployment YAML
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: log-panda-log-ingest-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: log-panda-log-ingest
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+```
+
+- HPA monitors **Deployment `log-panda-log-ingest`**.  
+- Scales between **1–5 pods** based on **50% CPU utilization**.
+
+---
+
+## ✅ Summary
+- HPA is a reactive autoscaler based on metrics.  
+- Scale-up is immediate, scale-down respects cooldown.  
+- Always set **min/max replicas** to avoid extreme scaling.  
+- Metrics can be **CPU, memory, custom, or external**.
+
+
+
+# Vertical Pod Autoscaler (VPA) Notes
+
+## 🌟 What is VPA?
+- **Definition**: VPA automatically adjusts the CPU and memory requests/limits for pods based on historical and current usage.
+- **Goal**: Ensure pods have the right resources without manual tuning.
+
+---
+
+## 🔧 Components
+- **VPA object**: Attached to a Deployment/StatefulSet.
+- **Recommender**: Monitors usage and provides recommendations.
+- **Updater**: Evicts pods to apply new resource requests.
+- **Admission Controller**: Ensures new pods start with recommended resources.
+
+---
+
+## 📝 Example VPA Manifest
+```yaml
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: log-panda-log-ingest-vpa
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: log-panda-log-ingest
+  updatePolicy:
+    updateMode: "Auto"
+```
+
+### Explanation
+- `targetRef`: Points to the Deployment whose pods you want to autoscale vertically.
+- `updateMode: Auto`: VPA will automatically evict pods and restart them with updated resources.
+
+---
+
+## ⚡ How it Works
+1. VPA observes pod metrics over time.
+2. Recommender suggests CPU/memory requests.
+3. If `updateMode: Auto`:
+   - Pods are evicted.
+   - New pods are scheduled with updated CPU/memory.
+4. If `updateMode: Off`:
+   - Only recommendations are provided; no changes are applied.
+
+### Important Notes
+- **Update causes pod eviction**: Pod restarts may impact availability; combine with HPA for best results.
+- **Works best for stateful apps**: Databases, Kafka brokers, etc., where horizontal scaling might be limited.
+- **Cannot prevent pod eviction if mode is `Auto`**.
+
+---
+
+## ✅ Best Practices
+- Use HPA for horizontal scaling and VPA for vertical scaling together.
+- Start with `updateMode: "Off"` in production to monitor recommendations.
+- Test evictions carefully to avoid downtime.
+- Monitor VPA logs:
+  ```bash
+  kubectl describe vpa <vpa-name>
+  ```
