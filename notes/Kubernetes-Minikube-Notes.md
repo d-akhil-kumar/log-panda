@@ -48,6 +48,14 @@
   minikube start --driver=docker
   ```
 
+
+- **To enable metrics server for HPA and VPA resource calculations**:
+  ```bash
+  minikube addons enable metrics-server
+  ```
+
+
+
 ---
 
 ## 📦 Pods
