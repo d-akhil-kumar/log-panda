@@ -406,6 +406,7 @@ spec:
 - Scale-up is immediate, scale-down respects cooldown.  
 - Always set **min/max replicas** to avoid extreme scaling.  
 - Metrics can be **CPU, memory, custom, or external**.
+- if in hpa min replica is 1 and if you scale down the pod to 0, then hpa will not spawn a new pod. 
 
 
 
