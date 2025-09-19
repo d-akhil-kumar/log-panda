@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-panda-app2
+  labels:
+    app: log-panda-app2
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: log-panda-app2
+  template:
+    metadata:
+      labels:
+        app: log-panda-app2
+    spec:
+      containers:
+        - name: log-panda-app2
+          image: akhilk007/log_panda_app2:v1.0.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: INGEST_API_URL
+              value: "http://log-panda-log-ingest-service:3003/ingest"
+            - name: APP_NAME
+              value: "app2"
+            - name: GENERATE_LOGS_TIME_SECONDS
+              value: "1"
+          resources:
+            requests:         # min resource values
+              cpu: "200m"
+              memory: "256Mi"
+            limits:           # max resource values
+              cpu: "500m"
+              memory: "512Mi"      
