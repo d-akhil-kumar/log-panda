@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: log-panda-log-db-ingest
+  labels:
+    app: log-panda-log-db-ingest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-panda-log-db-ingest
+  template:
+    metadata:
+      labels:
+        app: log-panda-log-db-ingest
+    spec:
+      containers:
+        - name: log-panda-log-db-ingest
+          image: akhilk007/log_panda_log_db_ingest:v1.0.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: NODE_ENV
+              value: "production"
+            - name: DB_HOST
+              value: log-db-postgres
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_DATABASE
+              value: "log_panda"
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: log-panda-log-db-ingest-secret
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: log-panda-log-db-ingest-secret
+                  key: DB_PASSWORD 
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"         
+
+
+
+# JUST FOR LEARNING
+# USED BELOW CMD TO CREATE SECRETS
+# kubectl create secret generic log-panda-log-db-ingest-secret \
+#   --from-literal=DB_USERNAME=log_panda_db_user \
+#   --from-literal=DB_PASSWORD=ptm_pg_2024
+# secret/log-panda-log-db-ingest-secret created

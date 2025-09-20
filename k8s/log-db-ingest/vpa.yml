@@ -1,0 +1,21 @@
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: log-panda-log-db-ingest-vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: log-panda-log-db-ingest
+  updatePolicy:
+    updateMode: "Auto"   # Options: Off | Initial | Auto
+  resourcePolicy:
+    containerPolicies:
+      - containerName: log-panda-log-db-ingest
+        minAllowed:
+          cpu: "50m"
+          memory: "64Mi"
+        maxAllowed:
+          cpu: "1"
+          memory: "2Gi"
+        controlledResources: ["cpu", "memory"]
