@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: log-db-postgres   # Headless service for StatefulSet
+  labels:
+    app: log-panda-log-ingest-postgres
+spec:
+  ports:
+    - name: pg-port
+      port: 5432
+      targetPort: 5432
+  clusterIP: None           # Required for StatefulSet (stable DNS)
+  selector:
+    app: log-panda-log-ingest-postgres

@@ -471,3 +471,278 @@ spec:
   ```bash
   kubectl describe vpa <vpa-name>
   ```
+
+---
+
+## Kubernetes Probes: Liveness, Readiness, Startup
+
+Kubernetes uses **probes** to determine the health and lifecycle state of a container.  
+They ensure that Pods are restarted or traffic is directed correctly, depending on the container’s behavior.
+
+---
+
+#### 1. **Liveness Probe**
+- **Purpose**: Checks if the container is **still alive**.
+- If it fails → Kubernetes **kills the container** and restarts it.
+- Used for: detecting **deadlocks, infinite loops, or crashes** where the container is running but not working.
+
+#### Example:
+```yaml
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
+````
+
+---
+
+####  2. **Readiness Probe**
+
+* **Purpose**: Checks if the container is **ready to serve traffic**.
+* If it fails → Kubernetes **removes the Pod from Service endpoints** (no traffic is routed).
+* Container stays alive, but no traffic until it passes again.
+* Used for: apps that take time to warm up or load data before serving.
+
+#### Example:
+
+```yaml
+readinessProbe:
+  tcpSocket:
+    port: 5432
+  initialDelaySeconds: 15
+  periodSeconds: 10
+```
+
+---
+
+####  3. **Startup Probe**
+
+* **Purpose**: For containers that take **long time to initialize**.
+
+* During startup probe phase:
+
+  * Liveness & Readiness probes are **disabled**.
+  * Only once startup succeeds → Liveness & Readiness begin.
+
+* If startup fails → Pod is killed and restarted.
+
+* Used for: Kafka, Postgres, Elasticsearch, or apps with **heavy bootstrapping**.
+
+### Example:
+
+```yaml
+startupProbe:
+  tcpSocket:
+    port: 9092
+  failureThreshold: 30   # allows 30 * 10s = 5 minutes startup time
+  periodSeconds: 10
+```
+
+---
+
+####  ⚡ How They Work Together
+
+1. **Startup → Readiness → Liveness**
+
+   * At Pod creation:
+
+     * `startupProbe` runs (if defined).
+     * Until it passes, `readinessProbe` & `livenessProbe` are **ignored**.
+   * After startup passes:
+
+     * `readinessProbe` decides if Pod can receive traffic.
+     * `livenessProbe` ensures Pod is still alive.
+
+2. **If no startupProbe is defined**:
+
+   * Liveness & Readiness begin **immediately** after container start.
+
+---
+
+####  🔑 Best Practices
+
+* **Always add `readinessProbe`** for apps exposed via Services → prevents routing traffic too early.
+* **Use `startupProbe`** for slow-starting apps (Kafka, Postgres, Elasticsearch, etc.).
+* **LivenessProbe should be lightweight** (simple HTTP/TCP checks). Avoid expensive queries.
+* **Don’t duplicate logic**:
+
+  * If you have a startupProbe, keep readiness/liveness aggressive.
+* **Failure thresholds matter**:
+
+  * Too strict → false restarts.
+  * Too loose → longer downtime before restart.
+
+---
+
+####  🚀 Example: Kafka with Probes
+
+```yaml
+startupProbe:
+  tcpSocket:
+    port: 9092
+  failureThreshold: 30
+  periodSeconds: 10
+
+readinessProbe:
+  tcpSocket:
+    port: 9092
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+livenessProbe:
+  tcpSocket:
+    port: 9092
+  initialDelaySeconds: 60
+  periodSeconds: 20
+```
+
+* `startupProbe`: waits up to 5 min for Kafka to bootstrap.
+* `readinessProbe`: marks broker ready only after it accepts TCP.
+* `livenessProbe`: restarts broker if it later becomes unresponsive.
+
+---
+
+✅ With this setup:
+
+* Kafka won’t get killed while booting.
+* It won’t receive traffic until it’s ready.
+* If it freezes after running, K8s restarts it.
+
+```
+
+---
+
+Would you like me to also append this probe explanation into your **main running notes file** (so it stays with HPA, VPA, StatefulSets, etc.) or keep it as a **separate probes.md**?
+```
+
+
+Here’s a **.md formatted note** on Kubernetes Probes, their use cases, and how they relate to each other:
+
+````markdown
+# Kubernetes Probes (Liveness, Readiness, Startup)
+
+Kubernetes uses **probes** to monitor the health of containers and decide whether to restart them, send traffic to them, or wait for them to become ready.  
+There are **three types of probes**: `livenessProbe`, `readinessProbe`, and `startupProbe`.
+
+---
+
+## 1. Liveness Probe 🩺
+- **Purpose**: Checks if the container is **still alive** (responsive).  
+- **If it fails** → Kubernetes **restarts the container**.  
+- Example use case:
+  - Web server stuck in a deadlock (process alive, but not responding).  
+  - Kafka node hung due to GC or thread lock.  
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  failureThreshold: 3
+````
+
+---
+
+#### 2. Readiness Probe ✅
+
+* **Purpose**: Checks if the container is **ready to serve requests/traffic**.
+* **If it fails** → Pod is marked **NOT READY**, removed from Service endpoints, but **not restarted**.
+* Example use case:
+
+  * Database container still initializing schemas.
+  * Kafka broker started, but not yet connected to Zookeeper/Controller.
+
+```yaml
+readinessProbe:
+  tcpSocket:
+    port: 9092
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  failureThreshold: 6
+```
+
+---
+
+####  3. Startup Probe 🚀
+
+* **Purpose**: Handles **slow-starting containers** (like Kafka, databases, or legacy apps).
+* **Runs first**, and only after it succeeds do `livenessProbe` and `readinessProbe` start.
+* **If it fails** → Container is killed and restarted.
+* Prevents premature failures caused by long boot times.
+
+```yaml
+startupProbe:
+  tcpSocket:
+    port: 9092
+  failureThreshold: 30    # allows up to 30 * 10s = 5 minutes startup
+  periodSeconds: 10
+```
+
+---
+
+####  🔄 How They Work Together
+
+1. **Startup Probe → Readiness + Liveness**
+
+   * While `startupProbe` is running, **liveness** and **readiness** are ignored.
+   * Once `startupProbe` succeeds, **liveness** and **readiness** start checking.
+
+2. **Readiness ≠ Liveness**
+
+   * Readiness failing **does not restart** the Pod → it just stops receiving traffic.
+   * Liveness failing **restarts** the Pod.
+
+3. **Common Flow**
+
+   * Pod starts → `startupProbe` checks.
+   * If passes → Pod enters liveness + readiness checks.
+   * If readiness fails → Pod not added to Service.
+   * If liveness fails → Pod restarted.
+
+---
+
+#### ⚖️ When to Use Which?
+
+* **Only livenessProbe** → For apps that start fast and rarely hang.
+* **livenessProbe + readinessProbe** → For most production apps.
+* **All three (startup + readiness + liveness)** → For heavy/slow apps like Kafka, databases, Elasticsearch, etc.
+
+---
+
+####  Example Combined Setup (Kafka)
+
+```yaml
+startupProbe:
+  tcpSocket:
+    port: 9092
+  failureThreshold: 30
+  periodSeconds: 10
+
+readinessProbe:
+  tcpSocket:
+    port: 9092
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  failureThreshold: 6
+
+livenessProbe:
+  tcpSocket:
+    port: 9092
+  initialDelaySeconds: 60
+  periodSeconds: 15
+  failureThreshold: 3
+```
+
+---
+
+####  🎯 Key Tips
+
+* **Use `startupProbe` for apps with long init times** (avoids false restarts).
+* **Set `readinessProbe` for traffic safety** (don’t send traffic to unready pods).
+* **Always define `livenessProbe` in prod** to auto-heal deadlocks/hangs.
+* Tune `initialDelaySeconds`, `failureThreshold`, and `periodSeconds` carefully depending on app behavior.

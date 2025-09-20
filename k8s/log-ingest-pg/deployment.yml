@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: log-panda-log-ingest-postgres
+  labels:
+    app: long-panda-log-ingest-postgres
+spec:
+  serviceName: log-db-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-panda-log-ingest-postgres
+  template:
+    metadata:
+      labels:
+        app: log-panda-log-ingest-postgres
+    spec:
+      containers:
+        - name: log-panda-log-ingest-postgres-c
+          image: ankane/pgvector
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: "log_panda"
+            - name: POSTGRES_USER
+              value: "log_panda_db_user"
+            - name: POSTGRES_PASSWORD
+              value: "ptm_pg_2024"
+            - name: POSTGRES_PORT
+              value: "5432"
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-storage
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 100Mi

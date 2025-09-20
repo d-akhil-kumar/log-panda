@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: log-panda-log-ingest-postgres-init
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: log-panda-log-ingest-postgres-init-c
+          image: ankane/pgvector
+          command: ["psql"]
+          args:
+            - "-h"
+            - "log-db-postgres"   # service name of your Postgres StatefulSet
+            - "-U"
+            - "log_panda_db_user"
+            - "-d"
+            - "log_panda"
+            - "-f"
+            - "/init/init.sql"
+          env:
+            - name: PGPASSWORD
+              value: "ptm_pg_2024"
+          volumeMounts:
+            - name: init-pg-sql
+              mountPath: /init
+      volumes:
+        - name: init-pg-sql
+          configMap:
+            name: log-panda-log-ingest-postgres-init-sql
