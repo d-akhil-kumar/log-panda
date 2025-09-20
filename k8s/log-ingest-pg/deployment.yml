@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   name: log-panda-log-ingest-postgres
   labels:
-    app: long-panda-log-ingest-postgres
+    app: log-panda-log-ingest-postgres
 spec:
   serviceName: log-db-postgres
   replicas: 1
@@ -24,14 +24,37 @@ spec:
             - name: POSTGRES_DB
               value: "log_panda"
             - name: POSTGRES_USER
-              value: "log_panda_db_user"
+              valueFrom:
+                secretKeyRef:
+                  name: log-panda-postgres-secret
+                  key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
-              value: "ptm_pg_2024"
+              valueFrom:
+                secretKeyRef:
+                  name: log-panda-postgres-secret
+                  key: POSTGRES_PASSWORD
             - name: POSTGRES_PORT
               value: "5432"
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: postgres-storage
+          # Optional: add probes if needed
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - "-U"
+                - log_panda_db_user
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - "-U"
+                - log_panda_db_user
+            initialDelaySeconds: 5
+            periodSeconds: 5
   volumeClaimTemplates:
     - metadata:
         name: postgres-storage

@@ -746,3 +746,126 @@ livenessProbe:
 * **Set `readinessProbe` for traffic safety** (don’t send traffic to unready pods).
 * **Always define `livenessProbe` in prod** to auto-heal deadlocks/hangs.
 * Tune `initialDelaySeconds`, `failureThreshold`, and `periodSeconds` carefully depending on app behavior.
+
+
+
+Sure! Here’s a clean **.md** version for your notes on ConfigMaps and Secrets, covering theory, best practices, and useful commands:
+
+---
+
+# Kubernetes ConfigMaps & Secrets
+
+## ConfigMap
+
+* **Purpose:**
+  Store **non-sensitive configuration data** separately from your container images. Examples: application settings, URLs, feature flags, config files.
+
+* **Characteristics:**
+
+  * Data is **plain text**.
+  * Can be injected as **environment variables** or **mounted as files** in pods.
+  * Useful for **decoupling config from code**.
+
+* **When to use:**
+
+  * Application configuration that **does not contain sensitive information**.
+  * Config that **may change over time** without rebuilding the container image.
+
+* **Example:**
+
+  * Database host, feature toggle, log level, API endpoint.
+
+---
+
+## Secret
+
+* **Purpose:**
+  Store **sensitive information** such as passwords, tokens, API keys, and certificates.
+
+* **Characteristics:**
+
+  * Data is **base64 encoded**, not encrypted by default.
+  * Can be injected as **environment variables** or **mounted as files**.
+  * Access controlled using **RBAC**.
+  * Stored in **etcd**, which can (and should) be encrypted at rest in production.
+
+* **When to use:**
+
+  * Credentials for databases or services.
+  * TLS certificates, API keys, tokens.
+  * Anything sensitive that **should not appear in plain text in YAML or images**.
+
+* **Security Notes:**
+
+  * **Base64 is not secure**: it’s only encoding. Anyone with access can decode it.
+  * **RBAC**: Only users or service accounts with permissions can read the Secret.
+  * **Etcd encryption**: Enable to protect Secrets at rest.
+  * Secrets can be updated without redeploying the pod (if mounted as a volume).
+
+---
+
+## Best Practices
+
+| Aspect                 | ConfigMap                    | Secret                                 |
+| ---------------------- | ---------------------------- | -------------------------------------- |
+| Sensitive Data         | ❌                            | ✅                                      |
+| Mount Options          | Env vars / Volume            | Env vars / Volume                      |
+| Stored in etcd         | Yes, plain text              | Yes, base64 encoded (encrypt at rest)  |
+| Update Without Restart | Yes, if mounted as volume    | Depends on application                 |
+| Use Case Examples      | Feature flags, URLs, configs | DB credentials, API keys, certificates |
+
+---
+
+## Commands
+
+### Create ConfigMap
+
+```bash
+kubectl create configmap <name> --from-literal=KEY=VALUE
+kubectl create configmap <name> --from-file=path/to/file
+```
+
+### Create Secret
+
+```bash
+# Using literal values
+kubectl create secret generic <name> \
+  --from-literal=POSTGRES_USER=log_panda_db_user \
+  --from-literal=POSTGRES_PASSWORD=ptm_pg_2024
+```
+
+* No need to manually create YAML files for Secrets if using `kubectl create secret`.
+
+### View Secret YAML
+
+```bash
+kubectl get secret <name> -o yaml
+```
+
+* Values are **base64 encoded**.
+* Decode using:
+
+```bash
+echo "<base64-value>" | base64 --decode
+```
+
+---
+
+### RBAC & Access Control
+
+* Secrets are **protected via Kubernetes RBAC**:
+
+  * Only pods or users with appropriate **roles** can access Secrets.
+  * For example, you can give a **service account** permission to read only specific Secrets.
+
+* **Etcd encryption:**
+
+  * In production, encrypt Secrets at rest to prevent access if someone gains direct access to the etcd datastore.
+
+---
+
+This should give you a **complete theoretical note** without implementation details, but includes commands for CLI usage.
+
+---
+
+I can also make a **downloadable `.md` file** for you containing this. Do you want me to do that?
