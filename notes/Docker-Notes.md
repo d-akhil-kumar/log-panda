@@ -9,7 +9,7 @@
 
 ## ⚡ How containerisation is different from virtualisation?
 - **Virtualisation** → is used to create virtual machines where each intance of a VM has its own dedicated OS and Kernel. The host machine will allocate its resources (CPU, memoery..) to a VM and VM is bound to use them. Hence the resources are not sharable, once allocated even though VM is not using them. This managment of creating VMs, having its own OS and importanlty kernal, resource management and monitoring etc etc is being done the Hypervisor. Popular tools/softwares: VMWare, hyper-V etc
-- **containerisation** → is used to create containers, light weight having base images (OS) but not a dedicated kernel and resources. A container will share the kernel and resources of the host machine. If a container needs only 1GB of ram then it only uses that, and if it doesnt need it at the moment then host machine can still use it. ContainerD or DockerD is the deamon behing managing images, containers, monitoring etc etc. Popular tools/softwares: Docker, containerD
+- **containerisation** → is used to create containers, light weight having base images (OS) but not a dedicated kernel and resources. A container will share the kernel and resources of the host machine. If a container needs only 1GB of ram then it only uses that, and if it doesnt need it at the moment then host machine can still use it. all docker cmds we run in termial will talk to dockerD which acts as an api to us, then this dockerD will talk to containerD which handles the container life cycle. Popular tools/softwares: Docker, containerD
 
 ---
 
